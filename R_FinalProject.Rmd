@@ -1,0 +1,438 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+```{r}
+#imporring the libraries
+library('dplyr')
+library('RColorBrewer')
+```
+
+```{r}
+#Importing the csv file
+df = read.csv("AB_NYC_2019.csv")
+#checking the type of df
+#print(typeof(df))
+df = as.data.frame(df)
+```
+
+```{r}
+df
+```
+
+```{r}
+#Getting a glimpse of the dataset using summary()
+summary(df)
+```
+
+
+```{r}
+#Using the function glimpse in the dplyr library to get an arranged summary of the dataset
+
+glimpse(df)
+```
+
+From the above functions, it can be seen that the column 'Reviews per month' has NaN values. So we proceed on filling the NaN values with the median.
+
+```{r}
+median(df$reviews_per_month,na.rm=TRUE)
+```
+
+```{r}
+
+df$reviews_per_month = ifelse(is.na(df$reviews_per_month),
+                     ave(df$reviews_per_month, FUN = function(x) median(x, na.rm = TRUE)),
+                     df$reviews_per_month)
+```
+ Let us check if the NaN values have been replaced with the median
+ 
+```{r}
+sum(is.na(df$number_of_reviews))
+```
+ 
+ From the above function, it can be concluded that the NaN values hace been removed
+```{r}
+sum(is.na(df$reviews_per_month))
+```
+ 
+```{r}
+
+#l=names(df)
+#print(l)
+print(sum(is.na(df$id)))
+print(sum(is.na(df$host_name)))
+print(sum(is.na(df$host_id)))
+print(sum(is.na(df$neighbourhood_group)))
+print(sum(is.na(df$neighbourhood)))
+print(sum(is.na(df$reviews_per_month)))
+print(sum(is.na(df$latitude)))
+print(sum(is.na(df$longitude)))
+print(sum(is.na(df$room_type)))
+print(sum(is.na(df$price)))
+print(sum(is.na(df$minimum_nights)))
+print(sum(is.na(df$last_review)))
+print(sum(is.na(df$calculated_host_listings_count)))
+print(sum(is.na(df$availability_365)))
+
+
+```
+ 
+ Now, let us see the distribution of prices
+```{r}
+#plotting graphs
+boxplot(df$price,xlab="Price")
+boxplot(df$reviews_per_month,xlab="reviews per month")
+```
+
+
+```{r}
+hist(df$price,col=brewer.pal(20,"Set2"),xlab="Price",main="Distribution of Price")
+```
+From the above graphs, we can see that there are outliers which lie way beyond the permissible value(3rd quartile+1.5IQR).
+So we must bring them down to scale by replacing the outliers for accurate analysis
+
+In this case, we replace the outliers with the median of the column
+
+```{r}
+median(df$price)
+```
+
+```{r}
+
+price_outliers = boxplot(df$price,plot=FALSE)$out
+df$price = ifelse(df$price %in% price_outliers,
+                     ave(df$price, FUN = function(x) median(x, na.rm =TRUE)),df$price)
+
+boxplot(df$price,col=brewer.pal(20,"Set2"))
+
+```
+
+```{r}
+hist(df$price[df$price],col=brewer.pal(20,"Set2"),xlab="Price",main="Distribution of Price")
+```
+We can see from the above graphs the outliers have been replaced with the median
+
+
+Similarly for the column "minimum nights' we see that there are outliers from the graphs below
+
+```{r}
+boxplot(df$minimum_nights)
+hist(df$minimum_nights,col=brewer.pal(20,"Set2"),xlab="Minimum nights",main="Distribution of minimum nights")
+```
+
+
+```{r}
+
+minimum_nights_outliers = boxplot(df$minimum_nights,plot=FALSE)$out
+df$minimum_nights = ifelse(df$minimum_nights %in% minimum_nights_outliers,
+                     ave(df$minimum_nights, FUN = function(x) median(x, na.rm =TRUE)),df$minimum_nights)
+
+
+
+
+```
+ Now let us check whether we are successful in cleaning the data or not
+ 
+ 
+```{r}
+boxplot(df$minimum_nights)
+hist(df$minimum_nights,col=brewer.pal(20,"Set2"),xlab="Minimum nights",main="Distribution of minimum nights")
+
+```
+```{r}
+
+hist(df$number_of_reviews,col=brewer.pal(20,"Set2"))
+```
+ 
+```{r}
+number_of_reviews_outliers = boxplot(df$number_of_reviews,plot=FALSE)$out
+df$number_of_reviews = ifelse(df$number_of_reviews %in% number_of_reviews_outliers,
+                     ave(df$number_of_reviews, FUN = function(x) median(x, na.rm =TRUE)),df$number_of_reviews)
+```
+
+
+
+```{r}
+hist(df$number_of_reviews,col=brewer.pal(20,"Set2"),xlab="Number of reviews ",main="Distribution of number of reviews ")
+```
+
+
+```{r}
+boxplot(df$reviews_per_month,col=brewer.pal(20,"Set2"))
+
+```
+
+
+```{r}
+reviews_per_month_outliers = boxplot(df$reviews_per_month,plot=FALSE)$out
+df$reviews_per_month = ifelse(df$reviews_per_month %in% reviews_per_month_outliers,
+                     ave(df$reviews_per_month, FUN = function(x) median(x, na.rm =TRUE)),df$reviews_per_month)
+
+
+```
+```{r}
+hist(df$reviews_per_month,col=brewer.pal(20,"Set2"),xlab="Number of reviews ",main="Distribution of number of reviews ")
+```
+
+
+
+
+
+
+
+
+
+```{r}
+#Distribution of rooms across varuious neighburhood groups
+counts_room_type =table(df$neighbourhood_group)
+barplot(counts_room_type,main = "Distribution of rooms",col=brewer.pal(6,"Set2"))
+```
+
+
+
+```{r}
+
+
+
+boxplot(df$reviews_per_month~df$neighbourhood_group,col="red",xlab = "Neighbourhood Group",ylab = "Reviews per month")
+boxplot(df$price~df$neighbourhood_group,col="orange",xlab = "Neighbourhood Group",ylab = "Price")
+
+```
+From the above graphs, we can see that the reviews in a particular month is correlated to the average price of the rooms in a particular neighbourhood group
+
+
+
+
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+I have done till here properly
+Will continue in the evening
+
+
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+Let us perform normalisation
+
+
+```{r}
+hist(df$price,col=brewer.pal(20,"Set2"))
+```
+
+```{r}
+library(BBmisc)
+
+```
+```{r}
+df$price = normalize(df$price, method = "standardize", range = c(0, 1), margin = 1L, on.constant = "quiet")
+```
+
+Let us see if it has been normalised
+```{r}
+hist(df$price,col=brewer.pal(20,"Set2"),xlab = "Price",main="Normalised Price Distribution")
+```
+```{r}
+df = normalize(df, method = "standardize", range = c(0, 1), margin = 1L, on.constant = "quiet")
+```
+```{r}
+df
+```
+```{r}
+library(dplyr)
+```
+
+```{r}
+tempdf = select(df,"neighbourhood_group","room_type","minimum_nights","number_of_reviews","reviews_per_month","calculated_host_listings_count","availability_365","price")
+
+```
+```{r}
+glimpse(tempdf)
+```
+```{r}
+summary(tempdf)
+```
+
+```{r}
+tempdf$neighbourhood_group = factor(tempdf$neighbourhood_group,
+                         levels = c('Bronx', 'Brooklyn', 'Manhattan','Queens','Staten Island'),
+                         labels = c(1, 2, 3,4,5))
+```
+
+```{r}
+tempdf$room_type = factor(tempdf$room_type,
+                         levels = c('Entire home/apt', 'Private room', 'Shared room'),
+                         labels = c(1, 2, 3))
+```
+
+```{r}
+tempdf
+```
+
+```{r}
+cor(tempdf$price,tempdf$minimum_nights,method = c("pearson"))
+```
+
+
+```{r}
+glimpse(df)
+```
+
+```{r}
+boxplot(df$reviews_per_month)
+```
+
+```{r}
+#removing outliers
+review_outliers = boxplot(df$reviews_per_month,plot=FALSE)$out
+df$reviews_per_month = ifelse(df$reviews_per_month %in% review_outliers,
+                     ave(df$reviews_per_month, FUN = function(x) median(x, na.rm =TRUE)),df$reviews_per_month)
+
+boxplot(df$reviews_per_month)
+```
+
+The unique function returns the list of unique values in the given column
+```{r}
+unique_NBHG = unique(df$neighbourhood_group)
+print(unique_NBHG)
+```
+Plotting graphs for the distrbution of rows in various neighbourhood groups
+```{r}
+counts_room_type =table(df$neighbourhood_group)
+barplot(counts_room_type,main = "Distribution of rooms",col=brewer.pal(6,"Set2"))
+```
+
+```{r}
+collist <- c("neighbourhood_group","neighbourhood")
+for(i in unique_NBHG){
+ sel <- apply(df[,collist],1,function(row) i %in% row)
+ #df[sel,]
+ counts <- table(df[sel,]$room_type)
+ print(counts)
+  barplot(counts, main=i, 
+  xlab="Room_type",col=brewer.pal(20,"Set1") )
+ }
+
+```
+
+
+```{r}
+unique_NB = unique(df$neighbourhood)
+collist <- c("neighbourhood_group","neighbourhood")
+for(i in unique_NB){
+ sel <- apply(df[,collist],1,function(row) i %in% row)
+ #df[sel,]
+ counts <- table(df[sel,]$room_type)
+ print(counts)
+  barplot(counts, main=i, 
+  xlab="Room_type")
+ }
+```
+
+Variation of price v/s Room type
+
+```{r}
+glimpse(df)
+```
+```{r}
+library(ggplot2)
+```
+
+
+Let us replace the outliers with the median for price and see the variation across neighbourhoods
+```{r}
+price_outliers = boxplot(df$price,plot=FALSE)$out
+df$price = ifelse(df$price %in% price_outliers,
+                     ave(df$price, FUN = function(x) median(x, na.rm =TRUE)),df$price)
+
+boxplot(df$price)
+```
+
+
+
+```{r}
+ggplot(df, aes(price)) + geom_density(aes(fill=factor(neighbourhood_group)), alpha =0.8) +
+labs(title ="Price  Density plot",x="Price ",y="Density",fill = " Neighbourhood_group")
+```
+  
+```{r}
+library(ggplot2)
+```
+
+
+
+
+```{r}
+ggplot(df, aes(price)) + geom_density(aes(fill=factor(room_type)), alpha =0.8) +
+labs(title ="Price  Density plot",x="Price ",y="Density",fill = " Neighbourhood_group")
+```
+
+
+
+
+```{r}
+boxplot(df$price~df$neighbourhood_group,col="red",)
+```
+
+```{r}
+library(hexbin)
+```
+
+```{r}
+a=hexbin(df$price,df$number_of_reviews,xbins=40)
+
+plot(a)
+```
+
+
+Let us fin the relation between the 
+after normalisation
+```{r}
+hist(df$price,col=brewer.pal(20,"Set2"),xlab="Price",main="Distribution of Price")
+```
+
+
+
+```{r}
+
+boxplot(tempdf$reviews_per_month~tempdf$neighbourhood_group,col="red",xlab = "Neighbourhood Group",ylab = "Reviews per month")
+boxplot(tempdf$price~tempdf$neighbourhood_group,col="orange",xlab = "Neighbourhood Group",ylab = "Price")
+
+```
+
+```{r}
+linearMod <- lm(reviews_per_month ~ price, data=tempdf)
+print(linearMod)
+summary(linearMod)
+```
+```{r}
+
+```
+
+```{r}
+counts_room_type =table(df$neighbourhood_group)
+barplot(counts_room_type,main = "Distribution of rooms",col=brewer.pal(6,"Set2"))
+```
+```{r}
+hist(df$reviews_per_month,col=brewer.pal(20,"Set2"),xlab="Number of reviews ",main="Distribution of reviews per month ")
+```
+```{r}
+hist(df$number_of_reviews,col=brewer.pal(20,"Set2"),xlab="Number of reviews ",main="Distribution of number of reviews ")
+```
+
+```{r}
+ggplot(df, aes(price)) + geom_density(aes(fill=factor(room_type)), alpha =0.8) +
+labs(title ="Price  Density plot",x="Price ",y="Density",fill = " Neighbourhood_group")
+```
+```{r}
+ggplot(df, aes(price)) + geom_density(aes(fill=factor(neighbourhood_group)), alpha =0.8) +
+labs(title ="Price  Density plot",x="Price ",y="Density",fill = " Neighbourhood_group")
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
